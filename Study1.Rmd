@@ -1,0 +1,220 @@
+---
+title: "Study 1"
+author: "Lily Wu, z5164942"
+output: html_document
+---
+
+The aim of the first study is to determine whether analytical thinking and scientific knowledge positively correlate with (1) ability to discern real or fake COVID-19 news headlines and (2) tendency to share the headlines on social media. 
+
+There are two groups
+1. group that judged accuracy of news headlines (yes it's true *OR* no it's false)
+2. group that were asked if they would share the headline online (yes *OR* no) 
+
+The measured variables are **scientific knowledge**, which is based on a 17 basic science knowledge questions, **analytical thinking**, measured on a 6-item Cognitive Reflection Test, and **proportion of 'yes' repsonses**. 
+
+## R Markdown setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Install and load tidyverse package
+
+```{r install and load package}
+install.packages("tidyverse") # Install tidyverse
+library(tidyverse) # Load tidyverse
+```
+
+## Load the data
+
+```{r load data}
+# Load data into new variable for bar graph
+s1groupbargraphdata <- readxl::read_xlsx("NudgeDataStudy1GroupBarGraph.xlsx")
+# Print data
+print(s1groupbargraphdata)
+
+# Load data into new variable for scatterplots
+study1 <- readxl::read_xlsx("NudgeDataStudy1Scatterplots.xlsx") 
+# Print data
+print(study1)
+```
+
+## Bar Graph
+
+The bar graph compares the accuracy and sharing groups on how often they responded with ‘yes’ in response to real and fake COVID-19 headlines. 
+
+The accuracy group received the question 'To the best of your knowledge, is the claim in the above headline accurate?', whereas the sharing group responded to 'Would you consider sharing this story online (for example, through Facebook or Twitter)?'
+
+```{r bar graph}
+# Create a grouped bar graph 
+s1groupbargraph <- ggplot(aes(fill = HeadlineType, x = Group, y = `Yes Responses (%)`), data = s1groupbargraphdata) + 
+  geom_col(position = "dodge") +
+  ylab("Yes Responses (Proportion)") + # Change the y-axis title
+ggtitle("Proportion of 'Yes' Responses for Accuracy and Sharing Groups\nper Headline Type") + # Add a graph title 
+  scale_fill_discrete(name="Headline\nType") + # Change legend title
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), panel.border = element_blank(),
+axis.line = element_line(colour = "black")) # Remove gridlines, background colour and border. Add axis line.
+
+# Plot graph
+plot(s1groupbargraph)
+```
+
+
+People in the accuracy group tend to believe real headlines more than fake headlines. Similarly, people in the sharing group tend to share more real headlines than fake headlines. The difference between the proportion of yes responses for fake and real headlines is greater for the accuracy group than the sharing group. However, we need to run statistical analysis to determine whether this within-group difference is significant. 
+
+
+
+## Data wrangling for scatterplots 
+
+To make the dataset easier to use for graphing scatterplots, I selected the relevant columns, renamed columns and computed new variables. 
+
+### Selecting relevant columns
+
+```{r select columns}
+# Select relevant columns
+study1 <- study1 %>% 
+  select(QuestionType, CRT_ACC, ScienceKnowledge, Fake1_1, Fake1_2, Fake1_3, Fake1_4, Fake1_5, Fake1_6, Fake1_7, Fake1_8, Fake1_9, Fake1_10, Fake1_11, Fake1_12, Fake1_13, Fake1_14, Fake1_15, `Fake No. N`, `Fake No. Y`, Real1_1, Real1_2, Real1_3, Real1_4, Real1_5, Real1_6, Real1_7, Real1_8, Real1_9, Real1_10, Real1_11, Real1_12, Real1_13, Real1_14, Real1_15, `Real No. N`, `Real No. Y`)
+# Print data
+glimpse(study1)
+```
+
+### Renaming columns
+
+```{r rename}
+# Rename columns
+study1 <- study1 %>% 
+  rename(Group = QuestionType, Analytical_Thinking = CRT_ACC, Science_Knowledge = ScienceKnowledge, FakeQ1 = Fake1_1, FakeQ2 = Fake1_2, FakeQ3 = Fake1_3, FakeQ4 = Fake1_4, FakeQ5 = Fake1_5, FakeQ6 = Fake1_6, FakeQ7 = Fake1_7, FakeQ8 = Fake1_8, FakeQ9 = Fake1_9, FakeQ10 = Fake1_10, FakeQ11 = Fake1_11, FakeQ12 = Fake1_12, FakeQ13 = Fake1_13, FakeQ14 = Fake1_14, FakeQ15 = Fake1_15, No_Responses_Fake = `Fake No. N`, Yes_Responses_Fake = `Fake No. Y`, RealQ1 = Real1_1, RealQ2 = Real1_2, RealQ3 = Real1_3, RealQ4 = Real1_4, RealQ5 = Real1_5, RealQ6 = Real1_6, RealQ7 = Real1_7, RealQ8 = Real1_8, RealQ9 = Real1_9, RealQ10 = Real1_10, RealQ11 = Real1_11, RealQ12 = Real1_12, RealQ13 = Real1_13, RealQ14 = Real1_14, RealQ15 = Real1_15, No_Responses_Real = `Real No. N`, Yes_Responses_Real = `Real No. Y`)
+# Print data
+glimpse(study1)
+```
+
+### Computing new columns
+
+```{r compute}
+# Calculate the proportion of 'yes' responses per participant for fake headlines across both groups
+fakeheadline <- study1 %>%
+  mutate(Select_Yes_Proportion_FH = Yes_Responses_Fake/15)
+glimpse(fakeheadline) # Print data
+
+# Calculate the proportion of 'yes' responses per participant for fake headlines across both groups
+realheadline <- study1 %>%
+  mutate(Select_Yes_Proportion_RH = Yes_Responses_Real/15)
+glimpse(realheadline) # Print data
+```
+
+
+The purpose of creating these new columns is to figure out the extent to which members in the accuracy group believed in real and fake headlines and the willingness to share either real or fake headlines in the sharing group. Each member's average belief in headline accuracy (accuracy group) or willingness to share (sharing group) is then plotted against their scientific knowledge and analytical thinking scores to determine qualitative correlations between the variables. 
+
+
+## Graphing the scatterplots
+
+### Fake Headlines
+
+```{r scatterplot1}
+# New facet label names for 'Group' variable
+group.labs <- c("Accuracy", "Sharing")
+names(group.labs) <- c("1", "2")
+
+# Fake Headline, Analytical Thinking
+FH_AT <- ggplot(data = fakeheadline, aes(x = Select_Yes_Proportion_FH, y = Analytical_Thinking)) + 
+  geom_point(position = "jitter") + # Create scatterplot 
+  geom_smooth(method = lm, se = FALSE) + # Add regression line
+  facet_wrap(~ Group, labeller = labeller(Group = group.labs)) + # Compare between both groups 
+  xlab("Yes Responses (Proportion)") + # Change x-axis label
+  ylab("Cognitive Reflection Test Score") + # Change y-axis label
+  ggtitle("Correlation between Responding Yes to Fake Headlines and\nAnalytical Thinking") + # Change plot title 
+  theme_bw() + # Change theme
+  theme(panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour 
+        strip.text.x = element_text(size = 11, face = "bold"), # Customise text for accuracy and sharing labels 
+        strip.background = element_rect(colour="white", fill="white"), # Remove background for the accuracy and sharing labels
+        panel.spacing = unit(1, "lines")) # Increase spacing between two graphs 
+print(FH_AT) # Print graph
+```
+
+
+Responding 'Yes' to fake headlines means that one is more likely to believe in that fake headline. We can see that there is a weak negative correlation between belief in fake headlines and analytical thinking for the accuracy group. Similarly, responding 'yes' in the sharing group means that one is more likely to share the fake headline. There is a weak negative correlation between tendency to share fake headlines and analytical thinking. As both groups are negatively correlated for the two variables, there is a possibility that lower analytical thinking ability correlates with higher belief in or increased sharing of fake headlines. This assumption would need to be supported by statistical analysis. 
+
+
+
+```{r scatterplot2}
+# Fake Headline, Science Knowledge 
+FH_SK <- ggplot(data = fakeheadline, aes(x = Select_Yes_Proportion_FH, y = Science_Knowledge)) +
+  geom_point(position = "jitter") + # Create scatterplot 
+  geom_smooth(method = lm, se = FALSE) + # Add regression line
+  facet_wrap(~ Group, labeller = labeller(Group = group.labs)) + # Compare between both groups 
+  xlab("Yes Responses (Proportion)") + # Change x-axis label
+  ylab("Science Knowledge Score") + # Change y-axis label
+  ggtitle("Correlation between Responding Yes to Fake Headlines and\nScience Knowledge") + # Change plot title 
+  theme_bw() + # Change theme
+  theme(panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour 
+        strip.text.x = element_text(size = 11, face = "bold"), # Customise text for accuracy and sharing labels 
+        strip.background = element_rect(colour="white", fill="white"), # Remove background for the accuracy and sharing labels
+        panel.spacing = unit(1, "lines")) # Increase spacing between two graphs 
+print(FH_SK) # Print graph
+```
+
+
+There is a weak negative correlation between belief in fake headlines and science knowledge for the accuracy group. Similarly, tendency to share fake headlines and science knowledge are negatively correlated. It is possibile that lower science knowledge correlates with higher belief in or increased sharing of fake headlines. Again, this assumption would need to be supported by statistical analysis. 
+
+
+### Real Headlines
+
+```{r scatterplot3}
+# Real Headline, Analytical Thinking
+RH_AT <- ggplot(data = realheadline, aes(x = Select_Yes_Proportion_RH, y = Analytical_Thinking)) +
+  geom_point(position = "jitter") + # Create scatterplot 
+  geom_smooth(method = lm, se = FALSE) + # Add regression line
+  facet_wrap(~ Group, labeller = labeller(Group = group.labs)) + # Compare between both groups 
+  xlab("Yes Responses (Proportion)") + # Change x-axis label
+  ylab("Cognitive Reflection Test Score") + # Change y-axis label
+  ggtitle("Correlation between Responding Yes to Real Headlines and\nAnalytical Thinking") + # Change plot title 
+  theme_bw() + # Change theme
+  theme(panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour 
+        strip.text.x = element_text(size = 11, face = "bold"), # Customise text for accuracy and sharing labels 
+        strip.background = element_rect(colour="white", fill="white"), # Remove background for the accuracy and sharing labels
+        panel.spacing = unit(1, "lines")) # Increase spacing between two graphs 
+print(RH_AT) # Print graph
+```
+
+
+There is a weak positive correlation between belief in real headlines and analytical thinking for the accuracy group. In contrast, there is a weak negative correlation between tendency to share real headlines and analytical thinking. 
+
+
+```{r scatterplot4}
+# Real Headline, Science Knowledge 
+RH_SK <- ggplot(data = realheadline, aes(x = Select_Yes_Proportion_RH, y = Science_Knowledge)) +
+  geom_point(position = "jitter") + # Create scatterplot 
+  geom_smooth(method = lm, se = FALSE) + # Add regression line
+  facet_wrap(~ Group, labeller = labeller(Group = group.labs)) + # Compare between both groups 
+  xlab("Yes Responses (Proportion)") + # Change x-axis label
+  ylab("Science Knowledge Score") + # Change y-axis label
+  ggtitle("Correlation between Responding Yes to Real Headlines and\nScience Knowledge") + # Change plot title 
+  theme_bw() + # Change theme
+  theme(panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour 
+        strip.text.x = element_text(size = 11, face = "bold"), # Customise text for accuracy and sharing labels 
+        strip.background = element_rect(colour="white", fill="white"), # Remove background for the accuracy and sharing labels
+        panel.spacing = unit(1, "lines")) # Increase spacing between two graphs 
+print(RH_SK) # Print data
+```
+
+
+There is a weak positive correlation between belief in real headlines and science knowledge for the accuracy group. In contrast, there is a weak negative correlation between tendency to share real headlines and science knowledge. 
+
+
+
+
+
+
+
+
+
+

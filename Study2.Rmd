@@ -1,0 +1,173 @@
+---
+title: "Study 2"
+author: "Lily Wu, z5164942"
+output: html_document
+---
+
+The aim of study 2 is to establish whether getting people to think about the accuracy of news headlines influences how likely they are to share true and false COVID-19 news. 
+
+There are two groups
+1. nudge group (judged accuracy of non-COVID-19 headlines at the beginning of study by answering 'yes' or 'no')
+2. control group (did not rate accuracy of non-COVID-19 headlines)
+
+The measured variable is the likelihood of sharing true or false COVID-19 news (1-6 Likert scale, 1 = extremely unlikely to share, 6 = highly likely to share). 
+
+## R Markdown setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Install and load tidyverse package
+
+```{r install and load package}
+install.packages("tidyverse") # Install tidyverse
+library(tidyverse) # Load tidyverse
+```
+
+## Load the data
+
+```{r load data}
+# Load data into new variable 
+study2 <- readxl::read_xlsx("NudgeDataStudy2.xlsx")
+# Print data
+print(study2)
+```
+
+## Data wrangling for scatterplots 
+
+Similarly to Study 1, I selected the relevant columns, renamed columns and computed new variables to make the dataset easier to use for graphing.
+
+### Selecting relevant columns
+
+```{r select columns}
+# Select relevant columns
+study2 <- study2 %>% 
+  select(Group, Fake1_1, Fake1_2, Fake1_3, Fake1_4, Fake1_5, Fake1_6, Fake1_7, Fake1_8, Fake1_9, Fake1_10, Fake1_11, Fake1_12, Fake1_13, Fake1_14, Fake1_15, Real1_1, Real1_2, Real1_3, Real1_4, Real1_5, Real1_6, Real1_7, Real1_8, Real1_9, Real1_10, Real1_11, Real1_12, Real1_13, Real1_14, Real1_15)
+# Print data
+glimpse(study2)
+```
+
+### Renaming columns
+
+```{r rename}
+# Rename columns
+study2 <- study2 %>% 
+  rename(FakeQ1 = Fake1_1, FakeQ2 = Fake1_2, FakeQ3 = Fake1_3, FakeQ4 = Fake1_4, FakeQ5 = Fake1_5, FakeQ6 = Fake1_6, FakeQ7 = Fake1_7, FakeQ8 = Fake1_8, FakeQ9 = Fake1_9, FakeQ10 = Fake1_10, FakeQ11 = Fake1_11, FakeQ12 = Fake1_12, FakeQ13 = Fake1_13, FakeQ14 = Fake1_14, FakeQ15 = Fake1_15, RealQ1 = Real1_1, RealQ2 = Real1_2, RealQ3 = Real1_3, RealQ4 = Real1_4, RealQ5 = Real1_5, RealQ6 = Real1_6, RealQ7 = Real1_7, RealQ8 = Real1_8, RealQ9 = Real1_9, RealQ10 = Real1_10, RealQ11 = Real1_11, RealQ12 = Real1_12, RealQ13 = Real1_13, RealQ14 = Real1_14, RealQ15 = Real1_15)
+# Print data
+glimpse(study2)
+```
+
+### Computing new columns calculating the total and average sharing tendency per participant for real and fake headlines across both groups
+
+```{r compute}
+# Creating new columns using the nudge group data 
+s2nudge <- study2 %>% 
+ filter(Group == 2) %>% # Filter for nudge group only
+ rowwise() %>% # Ask R to see data in rows 
+ mutate(FH_N_Total_Sharing_Tendency = sum(FakeQ1, FakeQ2, FakeQ3, FakeQ4, FakeQ5, FakeQ6, FakeQ7, FakeQ8, FakeQ9, FakeQ10, FakeQ11, FakeQ12, FakeQ13, FakeQ14, FakeQ15)) %>% # Create new column to calculate total sharing tendency for fake headlines
+  mutate(RH_N_Total_Sharing_Tendency = sum(RealQ1, RealQ2, RealQ3, RealQ4, RealQ5, RealQ6, RealQ7, RealQ8, RealQ9, RealQ10, RealQ11, RealQ12, RealQ13, RealQ14, RealQ15)) %>% # Create new column to calculate total sharing tendency for real headlines
+  mutate(FH_N_Average_Sharing_Tendency = FH_N_Total_Sharing_Tendency/15) %>% # Create new column to calculate average sharing tendency for fake headlines
+  mutate(RH_N_Average_Sharing_Tendency = RH_N_Total_Sharing_Tendency/15) # Create new column to calculate total sharing tendency for real headlines
+glimpse(s2nudge) # Print data
+
+# Creating new columns using the control group data 
+s2control <- study2 %>% 
+  filter(Group == 1) %>% # Filter for control group only
+ rowwise() %>% # Ask R to see data in rows 
+ mutate(FH_C_Total_Sharing_Tendency = sum(FakeQ1, FakeQ2, FakeQ3, FakeQ4, FakeQ5, FakeQ6, FakeQ7, FakeQ8, FakeQ9, FakeQ10, FakeQ11, FakeQ12, FakeQ13, FakeQ14, FakeQ15)) %>% # Create new column to calculate total sharing tendency for fake headlines
+  mutate(RH_C_Total_Sharing_Tendency = sum(RealQ1, RealQ2, RealQ3, RealQ4, RealQ5, RealQ6, RealQ7, RealQ8, RealQ9, RealQ10, RealQ11, RealQ12, RealQ13, RealQ14, RealQ15)) %>% # Create new column to calculate total sharing tendency for real headlines
+  mutate(FH_C_Average_Sharing_Tendency = FH_C_Total_Sharing_Tendency/15) %>% # Create new column to calculate average sharing tendency for fake headlines
+  mutate(RH_C_Average_Sharing_Tendency = RH_C_Total_Sharing_Tendency/15) # Create new column to calculate total sharing tendency for real headlines
+glimpse(s2control) # Print data
+```
+
+The purpose of creating these new columns is to figure out the willingness to share either real or fake headlines in both the nudge and control groups. Average sharing tendencies for real and fake headlines are compared between groups to determine the effect of the nudge.   
+
+## Graphing the data
+
+Violin plots can be used to compare the nudge and control groups on their average sharing rates for real and fake COVID-19 headlines. 
+
+### Fake Headlines
+
+```{r fake headline graphs}
+# Fake Headlines, Nudge Group
+s2nudgeFH <- ggplot(data = s2nudge) +
+  geom_violin(aes(x = Group, y = FH_N_Average_Sharing_Tendency), fill = "grey") + # Create violin plot for nudge group and their average responses to fake headlines 
+  geom_boxplot(aes(x = Group, y = FH_N_Average_Sharing_Tendency), width = 0.3) + # Create box plot
+  scale_y_continuous(breaks=c(1,2,3,4,5,6)) + # Specify y-axis points
+  xlab("Nudge Group, Fake Headlines") + # Change x-axis label
+  ylab("Average Sharing Tendency") + # Change y-axis label
+  ggtitle("Average Sharing Tendency of Nudge Group for Fake Headlines") + # Change plot title
+  theme_bw() + # Change theme
+  theme(axis.ticks.x = element_blank(), # Remove x-axis ticks
+        panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour
+        axis.text.x = element_blank()) # Remove x-axis values 
+print(s2nudgeFH) # Print graph 
+
+# Fake Headlines, Control Group
+s2controlFH <- ggplot(data = s2control) +
+  geom_violin(aes(x = Group, y = FH_C_Average_Sharing_Tendency), fill = "darkgrey") + # Create violin plot for nudge group and their average responses to true headlines
+  geom_boxplot(aes(x = Group, y = FH_C_Average_Sharing_Tendency), width = 0.3) + # Create box plot
+    scale_y_continuous(breaks=c(1,2,3,4,5,6)) + # Specify y-axis points
+  xlab("Control Group, Fake Headlines") + # Change x-axis label
+  ylab("Average Sharing Tendency") + # Change y-axis label
+  ggtitle("Average Sharing Tendency of Control Group for Fake Headlines") + # Change plot title
+  theme_bw() + # Change theme
+  theme(axis.ticks.x = element_blank(), # Remove x-axis ticks
+        panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour
+        axis.text.x = element_blank()) # Remove x-axis values
+print(s2controlFH) # Print graph
+```
+
+
+To visually gauge the effect of the nudge on sharing tendencies, we can compare both groups on how they responded to fake headlines using the violin plots. The mean average sharing tendency for the nudge group (a bit below 3) is slightly lower than the mean for the control group (around 3). This could be a significant difference, but we cannot claim the nudge helped in reducing the sharing of fake headlines without statistical analysis. From the graphs, there seem to be less participants choosing 5 or 6 (meaning likely or highly likely to share) for the nudge group than the control. 
+
+
+### Real Headlines
+
+```{r real headline graphs}
+# Real Headlines, Nudge Group 
+s2nudgeRH <- ggplot(data = s2nudge) +
+  geom_violin(aes(x = Group, y = RH_N_Average_Sharing_Tendency), fill = "grey") + # Create violin plot for control group and their average responses to fake headlines
+  geom_boxplot(aes(x = Group, y = RH_N_Average_Sharing_Tendency), width = 0.3) + # Create box plot
+  scale_y_continuous(breaks=c(1,2,3,4,5,6)) + # Specify y-axis points
+  xlab("Nudge Group, Real Headlines") + # Change x-axis label
+  ylab("Average Sharing Tendency") + # Change y-axis label
+  ggtitle("Average Sharing Tendency of Nudge Group for Real Headlines") + # Change plot title
+  theme_bw() + # Change theme
+  theme(axis.ticks.x = element_blank(), # Remove x-axis ticks
+        panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour
+        axis.text.x = element_blank()) # Remove x-axis values
+print(s2nudgeRH) # Print graph
+
+
+# Real Headlines, Control Group
+s2controlRH <- ggplot(data = s2control) +
+  geom_violin(aes(x = Group, y = RH_C_Average_Sharing_Tendency), fill = "darkgrey") + # Create violin plot for control group and their average responses to true headlines
+  geom_boxplot(aes(x = Group, y = RH_C_Average_Sharing_Tendency), width = 0.3) + # Create box plot
+  scale_y_continuous(breaks=c(1,2,3,4,5,6)) + # Specify y-axis points
+  xlab("Control Group, Real Headlines") + # Change x-axis label
+  ylab("Average Sharing Tendency") + # Change y-axis label
+  ggtitle("Average Sharing Tendency of Control Group for Real Headlines") + # Change plot title
+  theme_bw() + # Change theme
+  theme(axis.ticks.x = element_blank(), # Remove x-axis ticks
+        panel.grid.major = element_blank(), # Remove gridlines
+        panel.grid.minor = element_blank(), # Remove gridlines
+        panel.background = element_blank(), # Remove background colour
+        axis.text.x = element_blank()) # Remove x-axis values
+print(s2controlRH) # Print graph
+```
+
+
+The mean for both groups is quite similar (a bit above 3). The general shape of the violin plot is also quite similar for both groups with the widest part of the plot from 3 to 5. We can assume that both groups responded similarly for real headlines. 
+
+Comparing across all four graphs, participants seem less likely to share fake headlines than real headlines. Lowest average sharing tendencies were produced when the nudge group received fake headlines. This visualisation hints at the possibility that the nudge may help in reducing the sharing of fake headlines, but this assumption would need to be supported by statistical analysis. 
+
+
