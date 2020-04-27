@@ -203,7 +203,7 @@ RH_SK <- ggplot(data = realheadline, aes(x = Select_Yes_Proportion_RH, y = Scien
         strip.text.x = element_text(size = 11, face = "bold"), # Customise text for accuracy and sharing labels 
         strip.background = element_rect(colour="white", fill="white"), # Remove background for the accuracy and sharing labels
         panel.spacing = unit(1, "lines")) # Increase spacing between two graphs 
-print(RH_SK) # Print data
+print(RH_SK) # Print graph
 ```
 
 
